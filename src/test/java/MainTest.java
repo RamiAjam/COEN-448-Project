@@ -474,7 +474,7 @@ class MainTest {
 
                 case 3:
                     Main.CommandInput(input, 5, new int[5][5]);
-                    Assertions.assertEquals(4, Main.robot.getDirection());
+                    Assertions.assertEquals(0, Main.robot.getDirection());
             }
         }
     }
@@ -501,7 +501,7 @@ class MainTest {
 
                 case 0:
                     Main.CommandInput(input, 5, new int[5][5]);
-                    Assertions.assertEquals(-1, Main.robot.getDirection());
+                    Assertions.assertEquals(3, Main.robot.getDirection());
             }
         }
     }
@@ -858,5 +858,38 @@ class MainTest {
                     outputStreamCaptor_message.reset();
             }
         }
+    }
+
+    @Test
+    public void CommandInput_H(){
+
+        outputStreamCaptor_message.reset();
+        String input = "H";
+
+        Main.commandHistory.add("5");
+        Main.commandHistory.add("c");
+        Main.commandHistory.add("R");
+        Main.commandHistory.add("M02");
+        Main.commandHistory.add("I2");
+        Main.commandHistory.add("H");
+
+        Main.CommandInput(input, 7, new int[7][7]);
+
+        Assertions.assertEquals("""
+                The commands you have entered are: \r
+                5, c, R, M02, I2, H\r
+                The system will now replay all the commands in order: \r
+                Current Position: (0,0)\r
+                Pen Position: Up\r
+                Pen Direction: North\r
+                Command H has been entered !!""",outputStreamCaptor_message.toString().trim());
+
+        Assertions.assertEquals(0, Main.robot.getxPosition());
+        Assertions.assertEquals(0, Main.robot.getyPosition());
+        Assertions.assertEquals(0, Main.robot.getDirection());
+        Assertions.assertTrue(Main.robot.isPenUp());
+        Assertions.assertEquals(2, Main.getGrid().length);
+        outputStreamCaptor_message.reset();
+
     }
 }

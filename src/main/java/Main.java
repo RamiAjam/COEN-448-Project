@@ -1,6 +1,4 @@
-import java.util.Arrays;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
@@ -8,11 +6,12 @@ public class Main {
     private static final String[] robotDirection = {"North" , "East" , "South" , "West"};
     private static int gridSize;
     private static int[][] grid;
+    public static final List<String> commandHistory = new ArrayList<>();
 
     public static void main(String[] args) {
 
-        String[] commands = {"U" , "D" , "R" , "L" , "M s OR M0s" , "P" , "C" , "Q" , "I s or I0s"};
-        String[] compareCommands = {"U" , "D" , "R" , "L" , "P" , "C" , "Q" };
+        String[] commands = {"U" , "D" , "R" , "L" , "M s OR M0s" , "P" , "C" , "Q" , "I s or I0s", "H"};
+        String[] compareCommands = {"U" , "D" , "R" , "L" , "P" , "C" , "Q", "H"};
         Scanner sc = new Scanner(System.in);
 
         System.out.println("Enter the size of the square floor: ");
@@ -25,12 +24,12 @@ public class Main {
         //infinite while loop to continuously ask for commands
         while(true){
 
-            String input;
             System.out.println("Enter a command");
-            input = sc.nextLine().replaceAll("\\s+","").toUpperCase();
+            String input = sc.nextLine().replaceAll("\\s+","").toUpperCase();
 
             // Removes all spaces and changes all input letters to uppercase then checks with the list of commands available
             if(Arrays.asList(compareCommands).contains(input)){
+                commandHistory.add(input); // add the info entered by user to the list only if its valid
                 CommandInput(input, gridSize, grid);
                 if (input.equalsIgnoreCase("Q")) {
                     break;
@@ -38,10 +37,10 @@ public class Main {
 
             }else if((input.length() >= 2) && (input.charAt(0) == 'M')){ // moves the robot in the grid s spaces
                 CommandInput_M(input, gridSize, grid);
-
+                commandHistory.add(input); // add the info entered by user to the list only if its valid
             }else if((input.length() >= 2) && (input.charAt(0) == 'I')){ // ReInitializes the grid to the specified input size
                 grid = CommandInput_I(input, grid);
-
+                commandHistory.add(input); // add the info entered by user to the list only if its valid
             }else{ // loop again if the user input is an invalid command
                 PrintCommands(commands);
             }
@@ -64,6 +63,7 @@ public class Main {
         try{
             gridSize = sc.nextInt();
             if((gridSize > 0) &&(gridSize < 100)){
+                commandHistory.add(Integer.toString(gridSize)); // add the info entered by user to the list only if its valid
                 return initialize(gridSize);
             }else
                 //throw new InputMismatchException();
@@ -141,7 +141,7 @@ public class Main {
 
     public static void moveForward(int numOfSpaces , int gridSize , int[][] grid){
 
-        if((((robot.getDirection()%4) + 4) % 4) == 0){ // facing north -> so we add to the yPosition
+        if(robot.getDirection() == 0){ // facing north -> so we add to the yPosition
             if((robot.getyPosition() + numOfSpaces) < gridSize) {
                 if(!robot.isPenUp()){ // robot traces its movement by changing 0 to 1 on the grid
                     for(int i = 0; i <= numOfSpaces; i++) {
@@ -154,7 +154,7 @@ public class Main {
             }else {
                 System.out.println("Invalid move (out of bound)");
             }
-        }else if((((robot.getDirection()%4) + 4) % 4) == 1) { // facing east -> so we add to the xPosition
+        }else if(robot.getDirection() == 1) { // facing east -> so we add to the xPosition
             if((robot.getxPosition() + numOfSpaces) < gridSize) {
                 if(!robot.isPenUp()){ // robot traces its movement by changing 0 to 1 on the grid
                     for(int i = 0; i <= numOfSpaces; i++) {
@@ -167,7 +167,7 @@ public class Main {
             }else{
                 System.out.println("Invalid move (out of bound)");
             }
-        }else if((((robot.getDirection()%4) + 4) % 4) == 2) { // facing south -> so we subtract from the yPosition
+        }else if(robot.getDirection() == 2) { // facing south -> so we subtract from the yPosition
             if((robot.getyPosition() - numOfSpaces) >= 0) {
                 if(!robot.isPenUp()){ // robot traces its movement by changing 0 to 1 on the grid
                     for(int i = 0; i <= numOfSpaces; i++) {
@@ -201,6 +201,33 @@ public class Main {
         for (String command : commands) {
             System.out.println(command);
         }
+    }
+
+    // replays all the commands that were done by the user from the beginning till the end
+    public static void replayCommandHistory() {
+
+        System.out.println("The commands you have entered are: ");
+        for (int i = 0; i < commandHistory.size()-1 ;  i++) {
+            System.out.print( commandHistory.get(i) + ", ");
+        }
+        System.out.println(commandHistory.get(commandHistory.size()-1));
+        System.out.println("The system will now replay all the commands in order: ");
+        gridSize = Integer.parseInt(commandHistory.get(0));
+        grid = initialize(gridSize); // initializes the array to what the user originally started with
+
+        for (int i = 1; i < commandHistory.size() ;  i++) {
+
+            if(commandHistory.get(i).charAt(0) == 'M') {
+                CommandInput_M(commandHistory.get(i), gridSize, grid);
+            }else if(commandHistory.get(i).charAt(0) == 'I') {
+                grid = CommandInput_I(commandHistory.get(i), grid);
+            }else if(!commandHistory.get(i).equalsIgnoreCase("H")){
+                CommandInput(commandHistory.get(i), gridSize, grid);
+            }else{
+                System.out.println("Command H has been entered !!");
+            }
+        }
+
     }
 
     public static void CommandInput_M(String input, int gridSize, int[][] grid) {
@@ -264,11 +291,11 @@ public class Main {
 
         }else if(input.equalsIgnoreCase("R")){ // turn the robot direction to the right
 
-            robot.setDirection(robot.getDirection() + 1);
+            robot.setDirection((((robot.getDirection() + 1)%4) + 4) % 4);
 
         }else if(input.equalsIgnoreCase("L")){ // turn the robot direction to the left
 
-            robot.setDirection(robot.getDirection() - 1);
+            robot.setDirection((((robot.getDirection() - 1)%4) + 4) % 4);
 
         }else if(input.equalsIgnoreCase("P")){ // prints out the grid into console
 
@@ -277,6 +304,10 @@ public class Main {
         }else if(input.equalsIgnoreCase("C")){ // prints out the Robot information
 
             printRobotInfo();
+
+        }else if(input.equalsIgnoreCase("H")){
+
+            replayCommandHistory();
 
         }else if(input.equalsIgnoreCase("Q")){ // Quits the program
 
